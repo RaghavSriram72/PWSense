@@ -29,7 +29,7 @@ export function Dashboard({ symptoms = [], loading }) {
 
   useEffect(() => {
     let cancelled = false
-    getHeartrate(24)
+    getHeartrate(168)
       .then((data) => {
         if (!cancelled) setHeartrate(Array.isArray(data) ? data : [])
       })
@@ -112,7 +112,7 @@ export function Dashboard({ symptoms = [], loading }) {
     .slice()
     .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
     .map((r) => ({
-      time: new Date(r.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      time: new Date(r.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
       heart_rate: r.heart_rate,
     }))
 
@@ -129,7 +129,7 @@ export function Dashboard({ symptoms = [], loading }) {
       <div className="bg-[#1e3a8a] text-white rounded-xl p-10 shadow-lg">
         <h2 className="text-4xl font-bold mb-3">Comprehensive Health Analytics</h2>
         <p className="text-blue-100 text-lg">
-          Deep insights into your symptom patterns and heart rate over the last 24 hours
+          Deep insights into your symptom patterns and heart rate over the last week
         </p>
       </div>
 
@@ -166,7 +166,7 @@ export function Dashboard({ symptoms = [], loading }) {
 
       {heartrateChartData.length > 0 && (
         <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Heart Rate (Last 24 Hours)</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-6">Heart Rate (Last Week)</h3>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={heartrateChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -184,7 +184,7 @@ export function Dashboard({ symptoms = [], loading }) {
                 dataKey="heart_rate"
                 stroke="#dc2626"
                 strokeWidth={2}
-                dot={{ fill: '#dc2626', r: 3 }}
+                dot={false}
                 name="BPM"
               />
             </LineChart>

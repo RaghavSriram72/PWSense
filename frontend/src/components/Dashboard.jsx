@@ -36,7 +36,6 @@ const EMOTION_COLORS = {
   surprised: '#a855f7',
 }
 
-// Higher score = more negative/distressed. angry is highest, happy is lowest.
 const EMOTION_SCORE = {
   happy: 1,
   calm: 2,
@@ -182,7 +181,7 @@ export function Dashboard({ symptoms = [], loading, emotionsVersion = 0 }) {
   return (
     <div className="space-y-8">
       <div className="bg-[#1e3a8a] text-white rounded-xl p-10 shadow-lg">
-        <h2 className="text-4xl font-bold mb-3">Comprehensive Health Analytics</h2>
+        <h2 className="text-4xl font-bold mb-3">PWS Health Dashboard</h2>
         <p className="text-blue-100 text-lg">
           Insights into PWS hunger, emotional state, symptom patterns, and heart rate over the past week
         </p>

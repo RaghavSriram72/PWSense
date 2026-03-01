@@ -12,9 +12,17 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Area,
-  AreaChart,
+  PieChart,
+  Pie,
+  Cell,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
 } from 'recharts'
+
+const COLORS = ['#1e3a8a', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#1e40af', '#1d4ed8']
 
 function getSeverityColor(severity) {
   if (severity <= 3) return 'bg-green-100 text-green-800 border-green-300'
@@ -42,22 +50,48 @@ export function SymptomHistory({ symptoms }) {
     const diffDays = (Date.now() - new Date(s.date).getTime()) / (1000 * 60 * 60 * 24)
     return diffDays <= 30
   })
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const weekSymptoms = (symptoms || []).filter((s) => new Date(s.date).getTime() >= weekAgo)
 
-  const dateGroups = {}
-  ;(symptoms || []).forEach((s) => {
-    const date = new Date(s.date).toLocaleDateString()
-    if (!dateGroups[date]) dateGroups[date] = []
-    dateGroups[date].push(s.severity)
-  })
-  const chartData = Object.entries(dateGroups)
-    .map(([date, severities]) => ({
-      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      avgSeverity: severities.reduce((a, b) => a + b, 0) / severities.length,
-      maxSeverity: Math.max(...severities),
-      count: severities.length,
+  const severityOverTime = weekSymptoms
+    .map((s) => ({
+      date: new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      severity: s.severity,
+      type: s.symptomType,
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(-14)
+
+  const symptomTypeCount = {}
+  last30Days.forEach((s) => {
+    symptomTypeCount[s.symptomType] = (symptomTypeCount[s.symptomType] || 0) + 1
+  })
+  const symptomDistribution = Object.entries(symptomTypeCount).map(([name, value]) => ({
+    name: name.charAt(0).toUpperCase() + name.slice(1),
+    value,
+  }))
+
+  const radarData = Object.entries(symptomTypeCount).map(([type]) => {
+    const symptomsOfType = last30Days.filter((s) => s.symptomType === type)
+    const avgSev =
+      symptomsOfType.length > 0
+        ? symptomsOfType.reduce((sum, s) => sum + s.severity, 0) / symptomsOfType.length
+        : 0
+    return {
+      type: type.charAt(0).toUpperCase() + type.slice(1),
+      severity: parseFloat(avgSev.toFixed(1)),
+      frequency: symptomsOfType.length,
+    }
+  })
+
+  const timeOfDay = { Morning: 0, Afternoon: 0, Evening: 0, Night: 0 }
+  last30Days.forEach((s) => {
+    const hour = new Date(s.date).getHours()
+    if (hour >= 5 && hour < 12) timeOfDay.Morning++
+    else if (hour >= 12 && hour < 17) timeOfDay.Afternoon++
+    else if (hour >= 17 && hour < 21) timeOfDay.Evening++
+    else timeOfDay.Night++
+  })
+  const timeOfDayData = Object.entries(timeOfDay).map(([name, value]) => ({ name, value }))
 
   const flareUpsByType = {}
   flareUps.forEach((s) => {
@@ -121,15 +155,9 @@ export function SymptomHistory({ symptoms }) {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Severity Trend (Last 14 Days)</h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="colorSeverity" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1e3a8a" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#1e3a8a" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Severity Trend Over Past Week</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={severityOverTime}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 12 }} />
                   <YAxis domain={[0, 10]} tick={{ fill: '#6b7280', fontSize: 12 }} />
@@ -140,48 +168,97 @@ export function SymptomHistory({ symptoms }) {
                       borderRadius: '8px',
                     }}
                   />
-                  <Area
+                  <Line
                     type="monotone"
-                    dataKey="avgSeverity"
+                    dataKey="severity"
                     stroke="#1e3a8a"
                     strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#colorSeverity)"
+                    dot={{ fill: '#1e3a8a', r: 3 }}
                   />
-                </AreaChart>
+                </LineChart>
               </ResponsiveContainer>
             </Card>
-            {flareUpChartData.length > 0 && (
+            <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Distribution of Symptom Types</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={symptomDistribution}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {symptomDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {radarData.length > 0 && (
               <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Flare-ups by Symptom Type</h3>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={flareUpChartData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                    <YAxis
-                      dataKey="name"
-                      type="category"
-                      tick={{ fill: '#6b7280', fontSize: 12 }}
-                      width={100}
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Symptom Pattern Analysis</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <RadarChart data={radarData}>
+                    <PolarGrid stroke="#e5e7eb" />
+                    <PolarAngleAxis dataKey="type" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                    <PolarRadiusAxis domain={[0, 10]} tick={{ fill: '#6b7280', fontSize: 10 }} />
+                    <Radar
+                      name="Avg Severity"
+                      dataKey="severity"
+                      stroke="#1e3a8a"
+                      fill="#1e3a8a"
+                      fillOpacity={0.6}
                     />
                     <Tooltip
-                      cursor={false}
                       contentStyle={{
                         backgroundColor: '#ffffff',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                       }}
                     />
-                    <Bar dataKey="count" fill="#dc2626" radius={[0, 8, 8, 0]} activeBar={{ fill: '#b91c1c' }} />
-                  </BarChart>
+                  </RadarChart>
                 </ResponsiveContainer>
               </Card>
             )}
+            <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Outburst Time of Day Distribution</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={timeOfDayData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                  <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
+                  <Tooltip
+                    cursor={false}
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Bar dataKey="value" fill="#3b82f6" radius={[8, 8, 0, 0]} activeBar={{ fill: '#2563eb' }} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
           </div>
 
           {topTriggers.length > 0 && (
             <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Most Common Triggers</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Outburst Most Common Triggers</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={topTriggers} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />

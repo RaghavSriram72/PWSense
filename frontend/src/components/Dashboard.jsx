@@ -5,25 +5,16 @@ import {
   Line,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
   Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
   Customized,
 } from 'recharts'
 import { Calendar, TrendingUp, AlertTriangle, Zap } from 'lucide-react'
 import { getHeartrate, getEmotions, getHungerScores } from '../api'
-
-const COLORS = ['#1e3a8a', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#1e40af', '#1d4ed8']
 
 const EMOTION_COLORS = {
   neutral: '#6b7280',
@@ -96,23 +87,6 @@ export function Dashboard({ symptoms = [], loading, emotionsVersion = 0 }) {
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
   const weekSymptoms = symptoms.filter((s) => new Date(s.date).getTime() >= weekAgo)
 
-  const severityOverTime = weekSymptoms
-    .map((s) => ({
-      date: new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      severity: s.severity,
-      type: s.symptomType,
-    }))
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-
-  const symptomTypeCount = {}
-  weekSymptoms.forEach((s) => {
-    symptomTypeCount[s.symptomType] = (symptomTypeCount[s.symptomType] || 0) + 1
-  })
-  const symptomDistribution = Object.entries(symptomTypeCount).map(([name, value]) => ({
-    name: name.charAt(0).toUpperCase() + name.slice(1),
-    value,
-  }))
-
   const avgSeverity =
     weekSymptoms.length > 0
       ? (weekSymptoms.reduce((sum, s) => sum + s.severity, 0) / weekSymptoms.length).toFixed(1)
@@ -120,35 +94,12 @@ export function Dashboard({ symptoms = [], loading, emotionsVersion = 0 }) {
   const highSeverityCount = weekSymptoms.filter((s) => s.severity >= 7).length
   const weeklyFrequency = weekSymptoms.length
 
-  const radarData = Object.entries(symptomTypeCount).map(([type]) => {
-    const symptomsOfType = weekSymptoms.filter((s) => s.symptomType === type)
-    const avgSev =
-      symptomsOfType.length > 0
-        ? symptomsOfType.reduce((sum, s) => sum + s.severity, 0) / symptomsOfType.length
-        : 0
-    return {
-      type: type.charAt(0).toUpperCase() + type.slice(1),
-      severity: parseFloat(avgSev.toFixed(1)),
-      frequency: symptomsOfType.length,
-    }
-  })
-
   const hungerChartData = hungerScores.map((e) => ({
     label: new Date(e.timestamp).toLocaleDateString('en-US', {
       month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
     }),
     score: e.hunger_score,
   }))
-
-  const timeOfDay = { Morning: 0, Afternoon: 0, Evening: 0, Night: 0 }
-  weekSymptoms.forEach((s) => {
-    const hour = new Date(s.date).getHours()
-    if (hour >= 5 && hour < 12) timeOfDay.Morning++
-    else if (hour >= 12 && hour < 17) timeOfDay.Afternoon++
-    else if (hour >= 17 && hour < 21) timeOfDay.Evening++
-    else timeOfDay.Night++
-  })
-  const timeOfDayData = Object.entries(timeOfDay).map(([name, value]) => ({ name, value }))
 
   const emotionChartData = emotions
     .filter((e) => new Date(e.timestamp).getTime() >= weekAgo)
@@ -371,7 +322,7 @@ export function Dashboard({ symptoms = [], loading, emotionsVersion = 0 }) {
         )}
       </Card>
 
-      {weekSymptoms.length === 0 ? (
+      {weekSymptoms.length === 0 && (
         <Card className="p-16 bg-white border border-gray-200 rounded-xl shadow-sm">
           <div className="text-center">
             <TrendingUp className="w-16 h-16 mx-auto text-gray-300 mb-4" />
@@ -379,112 +330,6 @@ export function Dashboard({ symptoms = [], loading, emotionsVersion = 0 }) {
             <p className="text-gray-500 mt-2">Start logging symptoms to see insights</p>
           </div>
         </Card>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Severity Trend Over Time (Past Week)</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={severityOverTime}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                  <YAxis domain={[0, 10]} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="severity"
-                    stroke="#1e3a8a"
-                    strokeWidth={3}
-                    dot={{ fill: '#1e3a8a', r: 3 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </Card>
-            <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Distribution of Symptom Types</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={symptomDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {symptomDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {radarData.length > 0 && (
-              <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Symptom Pattern Analysis</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="#e5e7eb" />
-                    <PolarAngleAxis dataKey="type" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                    <PolarRadiusAxis domain={[0, 10]} tick={{ fill: '#6b7280', fontSize: 10 }} />
-                    <Radar
-                      name="Avg Severity"
-                      dataKey="severity"
-                      stroke="#1e3a8a"
-                      fill="#1e3a8a"
-                      fillOpacity={0.6}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                      }}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </Card>
-            )}
-            <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Outburst Time of Day Distribution</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={timeOfDayData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                  <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
-                  <Tooltip
-                    cursor={false}
-                    contentStyle={{
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Bar dataKey="value" fill="#3b82f6" radius={[8, 8, 0, 0]} activeBar={{ fill: '#2563eb' }} />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          </div>
-
-        </>
       )}
     </div>
   )

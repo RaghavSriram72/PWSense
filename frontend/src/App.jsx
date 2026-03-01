@@ -36,6 +36,9 @@ export default function App() {
     setSymptoms((prev) => [created, ...prev])
   }
 
+  const [emotionsVersion, setEmotionsVersion] = useState(0)
+  const handleRecordingComplete = () => setEmotionsVersion((v) => v + 1)
+
   const symptomsForDisplay = Array.isArray(symptoms)
     ? symptoms.map(backendToSymptom).filter(Boolean)
     : []
@@ -55,10 +58,14 @@ export default function App() {
       </header>
 
       <main className="relative z-10">
-        <Tabs defaultValue="track" className="w-full">
+        <Tabs defaultValue="dashboard" className="w-full">
           <div className="bg-white py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-5 gap-3 bg-transparent h-auto p-0 mb-6">
+                <TabsTrigger value="dashboard">
+                  <BarChart3 className="w-5 h-5" aria-hidden />
+                  <span className="text-sm font-medium">Insights</span>
+                </TabsTrigger>
                 <TabsTrigger value="track">
                   <Plus className="w-5 h-5" aria-hidden />
                   <span className="text-sm font-medium">Track</span>
@@ -66,10 +73,6 @@ export default function App() {
                 <TabsTrigger value="record">
                   <Mic className="w-5 h-5" aria-hidden />
                   <span className="text-sm font-medium">Record</span>
-                </TabsTrigger>
-                <TabsTrigger value="dashboard">
-                  <BarChart3 className="w-5 h-5" aria-hidden />
-                  <span className="text-sm font-medium">Insights</span>
                 </TabsTrigger>
                 <TabsTrigger value="history">
                   <Clock className="w-5 h-5" aria-hidden />
@@ -94,7 +97,7 @@ export default function App() {
           <TabsContent value="record" className="mt-0">
             <div className="bg-[#d5dce6] py-12">
               <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-                <Record />
+                <Record onRecordingComplete={handleRecordingComplete} />
               </div>
             </div>
           </TabsContent>
@@ -103,7 +106,7 @@ export default function App() {
             <div className="bg-[#d5dce6] py-12">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {error && <p className="text-red-600 mb-4">{error}</p>}
-                <Dashboard symptoms={symptomsForDisplay} loading={loading} />
+                <Dashboard symptoms={symptomsForDisplay} loading={loading} emotionsVersion={emotionsVersion} />
               </div>
             </div>
           </TabsContent>

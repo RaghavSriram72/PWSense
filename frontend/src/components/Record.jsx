@@ -1,10 +1,12 @@
 import { useState, useRef } from 'react'
 import { Card } from './ui/Card'
 import { Button } from './ui/Button'
-import { transcribe, getScore, getEmotion, createHungerScore } from '../api'
+import { transcribe, getScore, getEmotion, createHungerScore, createEmotion } from '../api'
 import { Mic, Square, FileText, UtensilsCrossed, Smile } from 'lucide-react'
 
-export function Record() {
+const VALID_EMOTIONS = new Set(['neutral', 'calm', 'happy', 'sad', 'angry', 'fearful', 'disgust', 'surprised'])
+
+export function Record({ onRecordingComplete }) {
   const [isRecording, setIsRecording] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState('')
@@ -87,6 +89,12 @@ export function Record() {
         emotion: emotionRes.emotion,
         probabilities: emotionRes.probabilities,
       })
+
+      if (emotionRes.emotion && VALID_EMOTIONS.has(emotionRes.emotion.toLowerCase())) {
+        createEmotion(emotionRes.emotion).finally(() => onRecordingComplete?.())
+      } else {
+        onRecordingComplete?.()
+      }
     } catch (err) {
       setError(err.message || 'Failed to process recording')
     } finally {
@@ -104,7 +112,7 @@ export function Record() {
           <h2 className="text-3xl font-bold text-gray-900">Voice Recording</h2>
         </div>
         <p className="text-gray-600">
-          Record your voice to get a transcript, hunger score, and emotion analysis
+          Record your speech and automatically get a transcript, hunger score, and emotional state
         </p>
       </div>
 

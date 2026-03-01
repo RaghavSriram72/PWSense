@@ -68,6 +68,26 @@ export function SymptomHistory({ symptoms }) {
     count,
   }))
 
+  const triggers = {}
+  last30Days.forEach((s) => {
+    if (s.triggers) {
+      s.triggers
+        .split(',')
+        .map((t) => t.trim().toLowerCase())
+        .filter(Boolean)
+        .forEach((trigger) => {
+          triggers[trigger] = (triggers[trigger] || 0) + 1
+        })
+    }
+  })
+  const topTriggers = Object.entries(triggers)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name, count]) => ({
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      count,
+    }))
+
   return (
     <div className="space-y-6">
       {symptoms && symptoms.length > 0 && (
@@ -135,10 +155,15 @@ export function SymptomHistory({ symptoms }) {
               <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
                 <h3 className="text-xl font-bold text-gray-900 mb-6">Flare-ups by Symptom Type</h3>
                 <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={flareUpChartData}>
+                  <BarChart data={flareUpChartData} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                    <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
+                    <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                      width={100}
+                    />
                     <Tooltip
                       cursor={false}
                       contentStyle={{
@@ -147,12 +172,39 @@ export function SymptomHistory({ symptoms }) {
                         borderRadius: '8px',
                       }}
                     />
-                    <Bar dataKey="count" fill="#dc2626" radius={[8, 8, 0, 0]} activeBar={{ fill: '#b91c1c' }} />
+                    <Bar dataKey="count" fill="#dc2626" radius={[0, 8, 8, 0]} activeBar={{ fill: '#b91c1c' }} />
                   </BarChart>
                 </ResponsiveContainer>
               </Card>
             )}
           </div>
+
+          {topTriggers.length > 0 && (
+            <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Most Common Triggers</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={topTriggers} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                    width={100}
+                  />
+                  <Tooltip
+                    cursor={false}
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Bar dataKey="count" fill="#3b82f6" radius={[0, 8, 8, 0]} activeBar={{ fill: '#2563eb' }} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          )}
         </>
       )}
 

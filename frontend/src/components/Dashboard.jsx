@@ -59,7 +59,7 @@ const EMOTION_SCORE_LABELS = {
 }
 
 
-export function Dashboard({ symptoms = [], loading }) {
+export function Dashboard({ symptoms = [], loading, emotionsVersion = 0 }) {
   const [heartrate, setHeartrate] = useState([])
   const [emotions, setEmotions] = useState([])
   const [hungerScores, setHungerScores] = useState([])
@@ -71,18 +71,28 @@ export function Dashboard({ symptoms = [], loading }) {
         if (!cancelled) setHeartrate(Array.isArray(data) ? data : [])
       })
       .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
     getEmotions(7)
       .then((data) => {
         if (!cancelled) setEmotions(Array.isArray(data) ? data : [])
       })
       .catch(() => {})
+    return () => { cancelled = true }
+  }, [emotionsVersion])
+
+  useEffect(() => {
+    let cancelled = false
     getHungerScores(7)
       .then((data) => {
         if (!cancelled) setHungerScores(Array.isArray(data) ? data : [])
       })
       .catch(() => {})
     return () => { cancelled = true }
-  }, [])
+  }, [emotionsVersion])
 
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
   const weekSymptoms = symptoms.filter((s) => new Date(s.date).getTime() >= weekAgo)
@@ -110,26 +120,6 @@ export function Dashboard({ symptoms = [], loading }) {
       : '0'
   const highSeverityCount = weekSymptoms.filter((s) => s.severity >= 7).length
   const weeklyFrequency = weekSymptoms.length
-
-  const triggers = {}
-  weekSymptoms.forEach((s) => {
-    if (s.triggers) {
-      s.triggers
-        .split(',')
-        .map((t) => t.trim().toLowerCase())
-        .filter(Boolean)
-        .forEach((trigger) => {
-          triggers[trigger] = (triggers[trigger] || 0) + 1
-        })
-    }
-  })
-  const topTriggers = Object.entries(triggers)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([name, count]) => ({
-      name: name.charAt(0).toUpperCase() + name.slice(1),
-      count,
-    }))
 
   const radarData = Object.entries(symptomTypeCount).map(([type]) => {
     const symptomsOfType = weekSymptoms.filter((s) => s.symptomType === type)
@@ -194,7 +184,7 @@ export function Dashboard({ symptoms = [], loading }) {
       <div className="bg-[#1e3a8a] text-white rounded-xl p-10 shadow-lg">
         <h2 className="text-4xl font-bold mb-3">Comprehensive Health Analytics</h2>
         <p className="text-blue-100 text-lg">
-          Deep insights into your symptom patterns and heart rate over the last week
+          Insights into PWS hunger, emotional state, symptom patterns, and heart rate over the past week
         </p>
       </div>
 
@@ -231,7 +221,7 @@ export function Dashboard({ symptoms = [], loading }) {
 
       {heartrateChartData.length > 0 && (
         <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Heart Rate (Last Week)</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-6">Heart Rate (Past Week)</h3>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={heartrateChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -258,7 +248,7 @@ export function Dashboard({ symptoms = [], loading }) {
       )}
 
       <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-        <h3 className="text-xl font-bold text-gray-900 mb-2">Emotional State (Last Week)</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Emotional State (Past Week)</h3>
         <div className="flex flex-wrap gap-3 mb-6">
           {Object.entries(EMOTION_COLORS).map(([emotion, color]) => (
             <div key={emotion} className="flex items-center gap-1.5">
@@ -339,7 +329,7 @@ export function Dashboard({ symptoms = [], loading }) {
       </Card>
 
       <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-        <h3 className="text-xl font-bold text-gray-900 mb-2">Hunger Tracker (Last 7 Days)</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Hunger Tracker (Past Week)</h3>
         <p className="text-sm text-gray-500 mb-6">Each bar is one logged "Hungry" entry — height = hunger score (0–10)</p>
         {hungerChartData.length === 0 ? (
           <div className="flex items-center justify-center h-[280px] text-gray-400 text-sm">
@@ -394,7 +384,7 @@ export function Dashboard({ symptoms = [], loading }) {
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Severity Trend Over Time</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Severity Trend Over Time (Past Week)</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={severityOverTime}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -418,7 +408,7 @@ export function Dashboard({ symptoms = [], loading }) {
               </ResponsiveContainer>
             </Card>
             <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Symptom Type Distribution</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Distribution of Symptom Types</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -475,7 +465,7 @@ export function Dashboard({ symptoms = [], loading }) {
               </Card>
             )}
             <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Time of Day Patterns</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Outburst Time of Day Distribution</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={timeOfDayData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -495,32 +485,6 @@ export function Dashboard({ symptoms = [], loading }) {
             </Card>
           </div>
 
-          {topTriggers.length > 0 && (
-            <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Most Common Triggers</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={topTriggers} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    tick={{ fill: '#6b7280', fontSize: 12 }}
-                    width={100}
-                  />
-                  <Tooltip
-                    cursor={false}
-                    contentStyle={{
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Bar dataKey="count" fill="#3b82f6" radius={[0, 8, 8, 0]} activeBar={{ fill: '#2563eb' }} />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          )}
         </>
       )}
     </div>

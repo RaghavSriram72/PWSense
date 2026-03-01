@@ -1,10 +1,12 @@
 """
-PreStorm backend — Hunger tracker: transcribe (Wispr Flow) + satiety score (Claude).
+PreStorm backend — Hunger tracker: transcribe, satiety score, caretaker symptom logs.
 """
 import base64
 import io
 import json
 import os
+import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -22,6 +24,16 @@ CORS(app)
 
 # Wispr Flow: https://api-docs.wisprflow.ai/rest_api_transcribe
 WISPR_TRANSCRIBE_URL = "https://platform-api.wisprflow.ai/api/v1/dash/api"
+
+# Caretaker symptom log: allowed types and storage
+SYMPTOM_TYPES = frozenset({
+    "fatigue", "pain", "headache", "nausea", "dizziness",
+    "inflammation", "anxiety", "other",
+})
+_data_dir = _here / "data"
+_data_dir.mkdir(parents=True, exist_ok=True)
+SYMPTOMS_FILE = _data_dir / "symptoms.json"
+HEARTRATE_FILE = _data_dir / "heartrate.json"
 
 # Satiety score: Claude system prompt (do not modify)
 SATIETY_SCORE_SYSTEM_PROMPT = """Given this transcript, score the following on 0-10:
@@ -54,6 +66,34 @@ def _extract_json_from_text(text: str):
     if start >= 0 and end > start:
         return text[start:end]
     return text
+
+
+def _load_symptoms():
+    """Read symptom log from JSON file."""
+    if not SYMPTOMS_FILE.exists():
+        return []
+    with open(SYMPTOMS_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _save_symptoms(entries):
+    """Write symptom log to JSON file."""
+    with open(SYMPTOMS_FILE, "w", encoding="utf-8") as f:
+        json.dump(entries, f, indent=2, ensure_ascii=False)
+
+
+def _load_heartrate():
+    """Read heart rate readings from JSON file."""
+    if not HEARTRATE_FILE.exists():
+        return []
+    with open(HEARTRATE_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _save_heartrate(entries):
+    """Write heart rate readings to JSON file."""
+    with open(HEARTRATE_FILE, "w", encoding="utf-8") as f:
+        json.dump(entries, f, indent=2, ensure_ascii=False)
 
 
 def _guess_audio_format(content_type: str, filename: str = "") -> str:
@@ -222,6 +262,114 @@ def score():
         }), 502
 
     return jsonify(result)
+
+
+@app.route("/api/symptoms", methods=["GET"])
+def list_symptoms():
+    """Return all caretaker symptom log entries, newest first."""
+    try:
+        entries = _load_symptoms()
+        entries = sorted(entries, key=lambda e: e.get("timestamp", ""), reverse=True)
+        return jsonify(entries)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/symptoms", methods=["POST"])
+def create_symptom():
+    """
+    Caretaker manual symptom log. Body (JSON):
+    - symptom_type: fatigue | pain | headache | nausea | dizziness | inflammation | anxiety | other
+    - severity: 0-10
+    - possible_triggers: string (optional)
+    - additional_notes: string (optional)
+    - is_outbreak: boolean (optional, default false)
+    Server always sets id and timestamp (UTC); do not send timestamp from client.
+    """
+    body = request.get_json(silent=True) or {}
+    symptom_type = (body.get("symptom_type") or "").strip().lower()
+    if symptom_type not in SYMPTOM_TYPES:
+        return jsonify({
+            "error": "Invalid or missing symptom_type",
+            "allowed": list(SYMPTOM_TYPES),
+        }), 400
+    try:
+        severity = int(body.get("severity", 0))
+    except (TypeError, ValueError):
+        severity = 0
+    if not (0 <= severity <= 10):
+        return jsonify({"error": "severity must be 0-10"}), 400
+    possible_triggers = (body.get("possible_triggers") or "").strip()
+    additional_notes = (body.get("additional_notes") or "").strip()
+    is_outbreak = bool(body.get("is_outbreak", False))
+    # Timestamp is always server-generated (never from client input)
+    timestamp = datetime.now(timezone.utc).isoformat()
+    entry = {
+        "id": str(uuid.uuid4()),
+        "symptom_type": symptom_type,
+        "severity": severity,
+        "possible_triggers": possible_triggers,
+        "additional_notes": additional_notes,
+        "is_outbreak": is_outbreak,
+        "timestamp": timestamp,
+    }
+    try:
+        entries = _load_symptoms()
+        entries.append(entry)
+        _save_symptoms(entries)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify(entry), 201
+
+
+@app.route("/api/heartrate", methods=["GET"])
+def list_heartrate():
+    """
+    Return heart rate readings for charting. Query: ?hours=24 (default).
+    Readings in last N hours, sorted by timestamp ascending (for time-series chart).
+    """
+    try:
+        hours = request.args.get("hours", "24")
+        try:
+            hours = float(hours)
+        except (TypeError, ValueError):
+            hours = 24
+        hours = max(0.1, min(168, hours))  # clamp 0.1–168 (1 week)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+        cutoff_iso = cutoff.isoformat()
+        entries = _load_heartrate()
+        entries = [e for e in entries if (e.get("timestamp") or "") >= cutoff_iso]
+        entries.sort(key=lambda e: e.get("timestamp", ""))
+        return jsonify(entries)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/heartrate", methods=["POST"])
+def create_heartrate():
+    """
+    Submit a heart rate reading (device or manual entry for demo).
+    Body (JSON): { "heart_rate": number (required, 30-250 BPM) }
+    Optional: "timestamp" (ISO 8601) for manual backfill; otherwise server sets current time.
+    """
+    body = request.get_json(silent=True) or {}
+    try:
+        heart_rate = float(body.get("heart_rate", 0))
+    except (TypeError, ValueError):
+        return jsonify({"error": "heart_rate must be a number"}), 400
+    if not (30 <= heart_rate <= 250):
+        return jsonify({"error": "heart_rate must be between 30 and 250 BPM"}), 400
+    ts = (body.get("timestamp") or "").strip()
+    if not ts:
+        ts = datetime.now(timezone.utc).isoformat()
+    entry = {"timestamp": ts, "heart_rate": round(heart_rate, 1)}
+    try:
+        entries = _load_heartrate()
+        entries.append(entry)
+        _save_heartrate(entries)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify(entry), 201
 
 
 if __name__ == "__main__":

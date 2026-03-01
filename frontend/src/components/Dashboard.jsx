@@ -36,6 +36,28 @@ const EMOTION_COLORS = {
   surprised: '#a855f7',
 }
 
+// Higher score = more negative/distressed. angry is highest, happy is lowest.
+const EMOTION_SCORE = {
+  happy: 1,
+  calm: 2,
+  neutral: 3,
+  surprised: 4,
+  sad: 5,
+  disgust: 6,
+  fearful: 7,
+  angry: 8,
+}
+const EMOTION_SCORE_LABELS = {
+  1: 'Happy',
+  2: 'Calm',
+  3: 'Neutral',
+  4: 'Surprised',
+  5: 'Sad',
+  6: 'Disgust',
+  7: 'Fearful',
+  8: 'Angry',
+}
+
 
 export function Dashboard({ symptoms = [], loading }) {
   const [heartrate, setHeartrate] = useState([])
@@ -146,8 +168,8 @@ export function Dashboard({ symptoms = [], loading }) {
       label: new Date(e.timestamp).toLocaleDateString('en-US', {
         month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
       }),
-      intensity: e.intensity,
       emotion: e.emotion,
+      score: EMOTION_SCORE[e.emotion] ?? 3,
     }))
     .sort((a, b) => a.t - b.t)
 
@@ -249,16 +271,21 @@ export function Dashboard({ symptoms = [], loading }) {
           <LineChart data={emotionChartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis dataKey="label" tick={{ fill: '#6b7280', fontSize: 12 }} interval="preserveStartEnd" />
-            <YAxis domain={[0, 10]} tick={{ fill: '#6b7280', fontSize: 12 }} />
+            <YAxis
+              domain={[0, 9]}
+              ticks={[1, 2, 3, 4, 5, 6, 7, 8]}
+              tickFormatter={(v) => EMOTION_SCORE_LABELS[v] || ''}
+              tick={{ fill: '#6b7280', fontSize: 11 }}
+              width={64}
+            />
             <Tooltip
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null
-                const { label, intensity, emotion } = payload[0].payload
+                const { label, emotion } = payload[0].payload
                 return (
                   <div className="bg-white border border-gray-200 rounded-lg p-3 shadow text-sm">
                     <p className="text-gray-500 mb-1">{label}</p>
                     <p className="capitalize font-medium" style={{ color: EMOTION_COLORS[emotion] }}>{emotion}</p>
-                    <p className="text-gray-600">Intensity: {intensity}</p>
                   </div>
                 )
               }}
@@ -290,7 +317,7 @@ export function Dashboard({ symptoms = [], loading }) {
             />
             <Line
               type="linear"
-              dataKey="intensity"
+              dataKey="score"
               stroke="none"
               dot={(props) => {
                 const { cx, cy, payload } = props
@@ -385,7 +412,7 @@ export function Dashboard({ symptoms = [], loading }) {
                     dataKey="severity"
                     stroke="#1e3a8a"
                     strokeWidth={3}
-                    dot={{ fill: '#1e3a8a', r: 5 }}
+                    dot={{ fill: '#1e3a8a', r: 3 }}
                   />
                 </LineChart>
               </ResponsiveContainer>

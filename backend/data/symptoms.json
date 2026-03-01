@@ -11,7 +11,7 @@
   {
     "id": "a1b2c3d4-0002-4000-8000-000000000002",
     "symptom_type": "anxiety",
-    "severity": 8,
+    "severity": 9,
     "possible_triggers": "Food anticipation",
     "additional_notes": "Very agitated before meal",
     "is_outburst": true,
@@ -20,7 +20,7 @@
   {
     "id": "a1b2c3d4-0003-4000-8000-000000000003",
     "symptom_type": "fatigue",
-    "severity": 6,
+    "severity": 8,
     "possible_triggers": "Poor sleep",
     "additional_notes": "Napped in afternoon",
     "is_outburst": false,
@@ -29,7 +29,7 @@
   {
     "id": "a1b2c3d4-0004-4000-8000-000000000004",
     "symptom_type": "hungry",
-    "severity": 9,
+    "severity": 8,
     "possible_triggers": "Dinner delayed 30 minutes",
     "additional_notes": "Meltdown when dinner was late",
     "is_outburst": true,
@@ -38,7 +38,7 @@
   {
     "id": "a1b2c3d4-0005-4000-8000-000000000005",
     "symptom_type": "headache",
-    "severity": 6,
+    "severity": 7,
     "possible_triggers": "Dehydration",
     "additional_notes": "Mild headache midday",
     "is_outburst": false,
@@ -56,7 +56,7 @@
   {
     "id": "a1b2c3d4-0007-4000-8000-000000000007",
     "symptom_type": "hungry",
-    "severity": 8,
+    "severity": 7,
     "possible_triggers": "Saw food commercial on TV",
     "additional_notes": "Persistent food-seeking behavior in morning",
     "is_outburst": true,
@@ -65,7 +65,7 @@
   {
     "id": "a1b2c3d4-0008-4000-8000-000000000008",
     "symptom_type": "fatigue",
-    "severity": 7,
+    "severity": 6,
     "possible_triggers": "Disrupted sleep",
     "additional_notes": "Low energy all morning",
     "is_outburst": false,
@@ -74,7 +74,7 @@
   {
     "id": "a1b2c3d4-0009-4000-8000-000000000009",
     "symptom_type": "nausea",
-    "severity": 5,
+    "severity": 6,
     "possible_triggers": "Ate too quickly",
     "additional_notes": "Nauseous after lunch",
     "is_outburst": false,
@@ -83,16 +83,16 @@
   {
     "id": "a1b2c3d4-0010-4000-8000-000000000010",
     "symptom_type": "hungry",
-    "severity": 8,
+    "severity": 6,
     "possible_triggers": "Smelled food cooking",
     "additional_notes": "Constant kitchen visits before breakfast",
-    "is_outburst": true,
+    "is_outburst": false,
     "timestamp": "2026-02-26T07:30:00+00:00"
   },
   {
     "id": "a1b2c3d4-0011-4000-8000-000000000011",
     "symptom_type": "anxiety",
-    "severity": 6,
+    "severity": 5,
     "possible_triggers": "Visitor at home",
     "additional_notes": "Mild anxiety with new person present",
     "is_outburst": false,
@@ -110,7 +110,7 @@
   {
     "id": "a1b2c3d4-0013-4000-8000-000000000013",
     "symptom_type": "hungry",
-    "severity": 7,
+    "severity": 5,
     "possible_triggers": "Morning routine",
     "additional_notes": "Asking for second breakfast",
     "is_outburst": false,
@@ -119,7 +119,7 @@
   {
     "id": "a1b2c3d4-0014-4000-8000-000000000014",
     "symptom_type": "fatigue",
-    "severity": 6,
+    "severity": 4,
     "possible_triggers": "Busy day",
     "additional_notes": "Tired after activity session",
     "is_outburst": false,
@@ -137,25 +137,25 @@
   {
     "id": "a1b2c3d4-0016-4000-8000-000000000016",
     "symptom_type": "hungry",
-    "severity": 7,
+    "severity": 4,
     "possible_triggers": "Saw neighbor eating",
     "additional_notes": "Food-seeking behavior at park",
-    "is_outburst": true,
+    "is_outburst": false,
     "timestamp": "2026-02-28T09:00:00+00:00"
   },
   {
     "id": "a1b2c3d4-0017-4000-8000-000000000017",
     "symptom_type": "anxiety",
-    "severity": 5,
+    "severity": 3,
     "possible_triggers": "Doctor appointment",
-    "additional_notes": "Anxious about clinic visit",
+    "additional_notes": "Mild anxiety about clinic visit",
     "is_outburst": false,
     "timestamp": "2026-02-28T11:30:00+00:00"
   },
   {
     "id": "a1b2c3d4-0018-4000-8000-000000000018",
     "symptom_type": "fatigue",
-    "severity": 4,
+    "severity": 3,
     "possible_triggers": "Long outing",
     "additional_notes": "Tired after afternoon activities",
     "is_outburst": false,
@@ -164,34 +164,34 @@
   {
     "id": "ac2d4de1-8bbc-4baf-9eab-5c70f2e5ec59",
     "symptom_type": "headache",
-    "severity": 7,
+    "severity": 3,
     "possible_triggers": "Stress",
     "additional_notes": "",
-    "is_outburst": true,
+    "is_outburst": false,
     "timestamp": "2026-03-01T00:52:13.594308+00:00"
   },
   {
     "id": "db79333d-047d-42bc-854a-3b337b20b5b2",
     "symptom_type": "nausea",
-    "severity": 8,
+    "severity": 2,
     "possible_triggers": "",
     "additional_notes": "",
-    "is_outburst": true,
+    "is_outburst": false,
     "timestamp": "2026-03-01T00:53:26.215617+00:00"
   },
   {
     "id": "1050fcf0-1d0f-46f6-a1e1-1e5b3a0e5b83",
     "symptom_type": "anxiety",
-    "severity": 9,
+    "severity": 2,
     "possible_triggers": "Food",
     "additional_notes": "",
-    "is_outburst": true,
+    "is_outburst": false,
     "timestamp": "2026-03-01T00:53:57.091763+00:00"
   },
   {
     "id": "79b2f231-8824-452f-bd8d-766b61fc4dfb",
     "symptom_type": "headache",
-    "severity": 1,
+    "severity": 2,
     "possible_triggers": "lack of sleep",
     "additional_notes": "",
     "is_outburst": false,
@@ -200,7 +200,7 @@
   {
     "id": "028dbce8-5075-4bed-b8bc-ba7733321bba",
     "symptom_type": "nausea",
-    "severity": 9,
+    "severity": 2,
     "possible_triggers": "Lack of sleep",
     "additional_notes": "",
     "is_outburst": false,

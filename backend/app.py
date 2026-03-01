@@ -31,10 +31,14 @@ SYMPTOM_TYPES = frozenset({
     "fatigue", "pain", "headache", "nausea", "dizziness",
     "inflammation", "anxiety", "other",
 })
+EMOTION_TYPES = frozenset({
+    "neutral", "calm", "happy", "sad", "angry", "fearful", "disgust", "surprised",
+})
 _data_dir = _here / "data"
 _data_dir.mkdir(parents=True, exist_ok=True)
 SYMPTOMS_FILE = _data_dir / "symptoms.json"
 HEARTRATE_FILE = _data_dir / "heartrate.json"
+EMOTIONS_FILE = _data_dir / "emotions.json"
 
 # Satiety score: Claude system prompt (do not modify)
 SATIETY_SCORE_SYSTEM_PROMPT = """Given this transcript, score the following on 0-10:
@@ -94,6 +98,20 @@ def _load_heartrate():
 def _save_heartrate(entries):
     """Write heart rate readings to JSON file."""
     with open(HEARTRATE_FILE, "w", encoding="utf-8") as f:
+        json.dump(entries, f, indent=2, ensure_ascii=False)
+
+
+def _load_emotions():
+    """Read emotional state entries from JSON file."""
+    if not EMOTIONS_FILE.exists():
+        return []
+    with open(EMOTIONS_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _save_emotions(entries):
+    """Write emotional state entries to JSON file."""
+    with open(EMOTIONS_FILE, "w", encoding="utf-8") as f:
         json.dump(entries, f, indent=2, ensure_ascii=False)
 
 
@@ -481,6 +499,58 @@ def get_emotion():
                 os.unlink(wav_path)
             except OSError:
                 pass
+
+
+@app.route("/api/emotions", methods=["GET"])
+def list_emotions():
+    """Return emotional state entries for the last N days. Query: ?days=7 (default)."""
+    try:
+        days = request.args.get("days", "7")
+        try:
+            days = int(days)
+        except (TypeError, ValueError):
+            days = 7
+        days = max(1, min(30, days))
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff_iso = cutoff.isoformat()
+        entries = _load_emotions()
+        entries = [e for e in entries if (e.get("timestamp") or "") >= cutoff_iso]
+        return jsonify(entries)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/emotions", methods=["POST"])
+def create_emotion():
+    """
+    Log an emotional state entry. Body (JSON):
+    - emotion: neutral | calm | happy | sad | angry | fearful | disgust | surprised
+    - intensity: 0-10
+    """
+    body = request.get_json(silent=True) or {}
+    emotion = (body.get("emotion") or "").strip().lower()
+    if emotion not in EMOTION_TYPES:
+        return jsonify({"error": "Invalid or missing emotion", "allowed": list(EMOTION_TYPES)}), 400
+    try:
+        intensity = int(body.get("intensity", 5))
+    except (TypeError, ValueError):
+        intensity = 5
+    if not (0 <= intensity <= 10):
+        return jsonify({"error": "intensity must be 0-10"}), 400
+    timestamp = datetime.now(timezone.utc).isoformat()
+    entry = {
+        "id": str(uuid.uuid4()),
+        "emotion": emotion,
+        "intensity": intensity,
+        "timestamp": timestamp,
+    }
+    try:
+        entries = _load_emotions()
+        entries.append(entry)
+        _save_emotions(entries)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify(entry), 201
 
 
 if __name__ == "__main__":

@@ -25,6 +25,12 @@ export async function getHeartrate(hours = 24) {
   return res.json()
 }
 
+export async function getEmotions(days = 7) {
+  const res = await fetch(`${API}/emotions?days=${days}`)
+  if (!res.ok) throw new Error('Failed to load emotions')
+  return res.json()
+}
+
 export async function createHeartrate(heart_rate, timestamp) {
   const body = { heart_rate }
   if (timestamp) body.timestamp = timestamp

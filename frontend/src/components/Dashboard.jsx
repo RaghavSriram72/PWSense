@@ -18,20 +18,39 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
+  Customized,
 } from 'recharts'
 import { Calendar, TrendingUp, AlertTriangle, Zap } from 'lucide-react'
-import { getHeartrate } from '../api'
+import { getHeartrate, getEmotions } from '../api'
 
 const COLORS = ['#1e3a8a', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#1e40af', '#1d4ed8']
 
+const EMOTION_COLORS = {
+  neutral: '#6b7280',
+  calm: '#3b82f6',
+  happy: '#f59e0b',
+  sad: '#6366f1',
+  angry: '#ef4444',
+  fearful: '#f97316',
+  disgust: '#22c55e',
+  surprised: '#a855f7',
+}
+
+
 export function Dashboard({ symptoms = [], loading }) {
   const [heartrate, setHeartrate] = useState([])
+  const [emotions, setEmotions] = useState([])
 
   useEffect(() => {
     let cancelled = false
     getHeartrate(168)
       .then((data) => {
         if (!cancelled) setHeartrate(Array.isArray(data) ? data : [])
+      })
+      .catch(() => {})
+    getEmotions(7)
+      .then((data) => {
+        if (!cancelled) setEmotions(Array.isArray(data) ? data : [])
       })
       .catch(() => {})
     return () => { cancelled = true }
@@ -107,6 +126,19 @@ export function Dashboard({ symptoms = [], loading }) {
     else timeOfDay.Night++
   })
   const timeOfDayData = Object.entries(timeOfDay).map(([name, value]) => ({ name, value }))
+
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const emotionChartData = emotions
+    .filter((e) => new Date(e.timestamp).getTime() >= weekAgo)
+    .map((e) => ({
+      t: new Date(e.timestamp).getTime(),
+      label: new Date(e.timestamp).toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+      }),
+      intensity: e.intensity,
+      emotion: e.emotion,
+    }))
+    .sort((a, b) => a.t - b.t)
 
   const heartrateChartData = heartrate
     .slice()
@@ -191,6 +223,82 @@ export function Dashboard({ symptoms = [], loading }) {
           </ResponsiveContainer>
         </Card>
       )}
+
+      <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Emotional State (Last Week)</h3>
+        <div className="flex flex-wrap gap-3 mb-6">
+          {Object.entries(EMOTION_COLORS).map(([emotion, color]) => (
+            <div key={emotion} className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+              <span className="text-xs text-gray-500 capitalize">{emotion}</span>
+            </div>
+          ))}
+        </div>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={emotionChartData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="label" tick={{ fill: '#6b7280', fontSize: 12 }} interval="preserveStartEnd" />
+            <YAxis domain={[0, 10]} tick={{ fill: '#6b7280', fontSize: 12 }} />
+            <Tooltip
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null
+                const { label, intensity, emotion } = payload[0].payload
+                return (
+                  <div className="bg-white border border-gray-200 rounded-lg p-3 shadow text-sm">
+                    <p className="text-gray-500 mb-1">{label}</p>
+                    <p className="capitalize font-medium" style={{ color: EMOTION_COLORS[emotion] }}>{emotion}</p>
+                    <p className="text-gray-600">Intensity: {intensity}</p>
+                  </div>
+                )
+              }}
+            />
+            <Customized
+              component={({ formattedGraphicalItems }) => {
+                const points = formattedGraphicalItems?.[0]?.props?.points || []
+                return (
+                  <g>
+                    {points.map((point, i) => {
+                      if (i === 0) return null
+                      const prev = points[i - 1]
+                      const color = EMOTION_COLORS[emotionChartData[i - 1]?.emotion] || '#6b7280'
+                      return (
+                        <line
+                          key={i}
+                          x1={prev.x}
+                          y1={prev.y}
+                          x2={point.x}
+                          y2={point.y}
+                          stroke={color}
+                          strokeWidth={2}
+                        />
+                      )
+                    })}
+                  </g>
+                )
+              }}
+            />
+            <Line
+              type="linear"
+              dataKey="intensity"
+              stroke="none"
+              dot={(props) => {
+                const { cx, cy, payload } = props
+                return (
+                  <circle
+                    key={payload.t}
+                    cx={cx}
+                    cy={cy}
+                    r={5}
+                    fill={EMOTION_COLORS[payload.emotion] || '#6b7280'}
+                    stroke="white"
+                    strokeWidth={1.5}
+                  />
+                )
+              }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </Card>
 
       {symptoms.length === 0 ? (
         <Card className="p-16 bg-white border border-gray-200 rounded-xl shadow-sm">

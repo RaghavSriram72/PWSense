@@ -8,6 +8,7 @@ import { ElectronicBackground } from './components/ElectronicBackground'
 import { BarChart3, Clock, Plus, User } from 'lucide-react'
 import { getSymptoms } from './api'
 import { backendToSymptom } from './lib/utils'
+import logo from './logo.png'
 
 export default function App() {
   const [symptoms, setSymptoms] = useState([])
@@ -45,9 +46,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center justify-center">
             <div className="flex items-center gap-2">
-              <div className="w-16 h-16 rounded-xl bg-[#1e3a8a] flex items-center justify-center text-white text-2xl font-bold">
-                PWS
-              </div>
+              <img src={logo} alt="PWSense Logo" className="w-16 h-16" />
               <h1 className="text-3xl font-bold text-[#1e3a8a]">PWSense</h1>
             </div>
           </div>

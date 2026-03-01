@@ -26,8 +26,9 @@ CORS(app)
 WISPR_TRANSCRIBE_URL = "https://platform-api.wisprflow.ai/api/v1/dash/api"
 
 SYMPTOM_TYPES = frozenset({
-    "fatigue", "pain", "headache", "nausea", "dizziness",
-    "inflammation", "anxiety", "other", "hungry",
+    "skin picking", "high anxiety", "depression", "irritable",
+    "sleep disturbance", "increased opposition", "uncommunicative",
+    "hungry", "other",
 })
 EMOTION_TYPES = frozenset({
     "neutral", "calm", "happy", "sad", "angry", "fearful", "disgust", "surprised",
@@ -395,7 +396,7 @@ def list_symptoms():
 def create_symptom():
     """
     Caretaker manual symptom log. Body (JSON):
-    - symptom_type: fatigue | pain | headache | nausea | dizziness | inflammation | anxiety | other
+    - symptom_type: skin picking | high anxiety | depression | irritable | sleep disturbance | increased opposition | uncommunicative | hungry | other
     - severity: 0-10
     - possible_triggers: string (optional)
     - additional_notes: string (optional)

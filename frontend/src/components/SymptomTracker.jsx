@@ -70,7 +70,7 @@ export function SymptomTracker({ onAddSymptom }) {
           </div>
           <h2 className="text-3xl font-bold text-gray-900">Log Symptoms</h2>
         </div>
-        <p className="text-gray-600">Track how you're feeling to identify patterns and stay ahead of flare-ups</p>
+        <p className="text-gray-600">Track how you/your child is feeling to identify patterns and stay ahead of flare-ups</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

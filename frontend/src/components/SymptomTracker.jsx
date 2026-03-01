@@ -68,7 +68,7 @@ export function SymptomTracker({ onAddSymptom }) {
           <div className="w-12 h-12 rounded-lg bg-[#1e3a8a] flex items-center justify-center">
             <Activity className="w-6 h-6 text-white" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Log Your Symptoms</h2>
+          <h2 className="text-3xl font-bold text-gray-900">Log Symptoms</h2>
         </div>
         <p className="text-gray-600">Track how you're feeling to identify patterns and stay ahead of flare-ups</p>
       </div>

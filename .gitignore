@@ -32,4 +32,4 @@ build/
 backend/train_data/
 
 # notebooks
-backend/EmotionsRecognition.ipynb
+# backend/EmotionsRecognition.ipynb

@@ -31,6 +31,19 @@ export async function getEmotions(days = 7) {
   return res.json()
 }
 
+export async function createEmotion(emotion) {
+  const res = await fetch(`${API}/emotions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ emotion }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || res.statusText)
+  }
+  return res.json()
+}
+
 export async function createHeartrate(heart_rate, timestamp) {
   const body = { heart_rate }
   if (timestamp) body.timestamp = timestamp

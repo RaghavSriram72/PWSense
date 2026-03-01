@@ -3,24 +3,24 @@ import numpy as np
 import librosa
 import tensorflow as tf
 
+# Standard RAVDESS 8-class mapping (model trained on this order)
 EMOTIONS = {
-    0: "other",
-    1: "neutral",
-    2: "calm",
-    3: "happy",
-    4: "sad",
-    5: "angry",
-    6: "fearful",
-    7: "disgust",
-    8: "surprised",
-    9: "other",
+    0: "neutral",
+    1: "calm",
+    2: "happy",
+    3: "sad",
+    4: "angry",
+    5: "fearful",
+    6: "disgust",
+    7: "surprised",
 }
 
 MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models", "Emotion_Voice_Detection_Model.h5")
 
 
 def extract_mfcc(wav_path):
-    X, sample_rate = librosa.load(wav_path)
+    # Load at 16kHz to match typical emotion model training (RAVDESS often resampled)
+    X, sample_rate = librosa.load(wav_path, sr=16000, mono=True)
     mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=40).T, axis=0)
     return mfccs.reshape(1, 40, 1)  # (batch, timesteps, channels)
 

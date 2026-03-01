@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '../../lib/utils'
 
 export function Dialog({ open, onOpenChange, children }) {
@@ -8,12 +9,13 @@ export function Dialog({ open, onOpenChange, children }) {
     return () => { document.body.style.overflow = '' }
   }, [open])
   if (!open) return null
-  return (
+  const overlay = (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={() => onOpenChange(false)} aria-hidden />
       <div className="relative z-10 max-h-[90vh] overflow-y-auto">{children}</div>
     </div>
   )
+  return createPortal(overlay, document.body)
 }
 
 export function DialogContent({ className, children, ...props }) {

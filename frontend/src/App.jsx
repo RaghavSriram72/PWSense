@@ -66,13 +66,13 @@ export default function App() {
                   <BarChart3 className="w-5 h-5" aria-hidden />
                   <span className="text-sm font-medium">Insights</span>
                 </TabsTrigger>
-                <TabsTrigger value="track">
-                  <Plus className="w-5 h-5" aria-hidden />
-                  <span className="text-sm font-medium">Track</span>
-                </TabsTrigger>
                 <TabsTrigger value="record">
                   <Mic className="w-5 h-5" aria-hidden />
                   <span className="text-sm font-medium">Record</span>
+                </TabsTrigger>
+                <TabsTrigger value="track">
+                  <Plus className="w-5 h-5" aria-hidden />
+                  <span className="text-sm font-medium">Track</span>
                 </TabsTrigger>
                 <TabsTrigger value="history">
                   <Clock className="w-5 h-5" aria-hidden />

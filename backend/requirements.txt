@@ -2,8 +2,9 @@ flask
 flask-cors
 python-dotenv
 requests
-pydub
+# pydub - no longer needed
 anthropic
+
 # For /api/emotion (predict_emotion.py)
 numpy
 librosa

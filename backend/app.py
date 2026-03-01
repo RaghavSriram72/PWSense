@@ -155,14 +155,18 @@ def _audio_to_wav_path(audio_bytes: bytes, content_type: str, filename: str = ""
                 else:
                     fallback_formats = [fmt] + [f for f in fallback_formats if f != fmt]
                 seg = None
+                errors = {}
                 for f in fallback_formats:
                     try:
                         seg = AudioSegment.from_file(input_path, format=f)
                         break
-                    except Exception:
-                        continue
+                    except Exception as e:
+                        errors[f] = str(e)
                 if seg is None:
-                    raise ValueError("Could not decode audio. Check file format.")
+                    details = "; ".join(f"{f}: {e}" for f, e in errors.items())
+                    raise ValueError(
+                        f"Could not decode audio. Check file format and that ffmpeg is installed. Details: {details}"
+                    )
                 seg = seg.set_frame_rate(16000).set_channels(1)
                 seg.export(wav_path, format="wav")
             return wav_path
@@ -188,15 +192,19 @@ def _audio_to_16k_wav_base64(audio_bytes: bytes, content_type: str, filename: st
         fallback_formats = [fmt] + [f for f in fallback_formats if f != fmt]
     buf = io.BytesIO(audio_bytes)
     seg = None
+    errors = {}
     for f in fallback_formats:
         buf.seek(0)
         try:
             seg = AudioSegment.from_file(buf, format=f)
             break
-        except Exception:
-            continue
+        except Exception as e:
+            errors[f] = str(e)
     if seg is None:
-        raise ValueError("Could not decode audio as mp3, webm, wav, or mp4. Check file format.")
+        details = "; ".join(f"{f}: {e}" for f, e in errors.items())
+        raise ValueError(
+            f"Could not decode audio as mp3, webm, wav, or mp4. Check file format and that ffmpeg is installed. Details: {details}"
+        )
     seg = seg.set_frame_rate(16000).set_channels(1)
     out = io.BytesIO()
     seg.export(out, format="wav")
@@ -234,12 +242,8 @@ def transcribe():
     if not audio_bytes:
         return jsonify({"error": "Uploaded file is empty"}), 400
 
-    try:
-        audio_b64 = _audio_to_16k_wav_base64(audio_bytes, content_type, blob.filename or "")
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": f"Audio conversion failed: {e}"}), 400
+    # Send raw audio bytes directly — Wispr Flow accepts webm/mp3/wav without pre-conversion.
+    audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
 
     # Wispr Flow: POST JSON with audio (base64) and optional properties
     payload = {
@@ -474,13 +478,17 @@ def get_emotion():
     if not audio_bytes:
         return jsonify({"error": "Uploaded file is empty"}), 400
 
+    # Frontend sends pre-converted 16kHz mono WAV (browser AudioContext handles decoding).
+    # Just write bytes to a temp .wav file for librosa — no pydub/ffmpeg needed.
     wav_path = None
     try:
-        wav_path = _audio_to_wav_path(audio_bytes, content_type, blob.filename or "")
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        fd, wav_path = tempfile.mkstemp(suffix=".wav")
+        with os.fdopen(fd, "wb") as f:
+            f.write(audio_bytes)
     except Exception as e:
-        return jsonify({"error": f"Audio conversion failed: {e}"}), 400
+        if wav_path and os.path.exists(wav_path):
+            os.unlink(wav_path)
+        return jsonify({"error": f"Failed to write audio: {e}"}), 400
 
     try:
         from predict_emotion import predict_emotion, EMOTIONS

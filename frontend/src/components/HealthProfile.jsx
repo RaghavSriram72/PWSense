@@ -134,26 +134,48 @@ export function HealthProfile({ symptoms = [] }) {
 
   return (
     <div className="space-y-8">
-      <Card className="p-8 bg-white border border-gray-200 shadow-md rounded-xl">
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-lg bg-[#1e3a8a] flex items-center justify-center">
-              <User className="w-6 h-6 text-white" />
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900">Health Profile</h2>
+      <Card className="p-8 bg-[#1e3a8a] text-white shadow-lg rounded-xl">
+        <div className="flex items-start gap-5">
+          <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+            <Building2 className="w-6 h-6 text-white" />
           </div>
-          <p className="text-gray-600">Manage your health information and medical records</p>
+          <div>
+            <h3 className="text-2xl font-bold mb-3">Medical System Integration</h3>
+            <p className="text-blue-100 mb-5 leading-relaxed">
+              Share your symptom tracking data with healthcare providers through secure export formats. 
+              Your exported files can be imported into most Electronic Health Record (EHR) systems or 
+              shared directly with your doctor.
+            </p>
+            <div className="space-y-2.5">
+              <p className="text-blue-50 flex items-center gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+                HIPAA-compliant data export
+              </p>
+              <p className="text-blue-50 flex items-center gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+                Compatible with major EHR systems
+              </p>
+              <p className="text-blue-50 flex items-center gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+                Secure local storage (no cloud uploads)
+              </p>
+              <p className="text-blue-50 flex items-center gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+                Easy sharing via email or patient portal
+              </p>
+            </div>
+          </div>
         </div>
         <div className="flex flex-wrap gap-4 mt-8">
-          <Button variant="outline" onClick={exportToJSON} className="min-w-[200px] h-12">
+          <Button variant="outline" onClick={exportToJSON} className="min-w-[200px] h-12 text-gray-900">
             <Download className="w-4 h-4 mr-2" />
             Export Data (JSON)
           </Button>
-          <Button variant="outline" onClick={exportToText} className="min-w-[200px] h-12">
+          <Button variant="outline" onClick={exportToText} className="min-w-[200px] h-12 text-gray-900">
             <FileText className="w-4 h-4 mr-2" />
             Medical Report (TXT)
           </Button>
-          <Button variant="outline" onClick={() => setShareDialogOpen(true)} className="min-w-[200px] h-12">
+          <Button variant="outline" onClick={() => setShareDialogOpen(true)} className="min-w-[200px] h-12 text-gray-900">
             <Share2 className="w-4 h-4 mr-2" />
             Share with Provider
           </Button>
@@ -192,33 +214,6 @@ export function HealthProfile({ symptoms = [] }) {
       <Card className="p-8 bg-white shadow-md border border-gray-200 rounded-xl">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-[#1e3a8a] flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-white" />
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900">Medical Information</h3>
-        </div>
-        <div className="space-y-5">
-          {[
-            ['allergies', 'Allergies', 'List any allergies'],
-            ['currentMedications', 'Current Medications', 'List medications with dosage'],
-            ['chronicConditions', 'Chronic Conditions', 'List chronic conditions'],
-          ].map(([key, label, placeholder]) => (
-            <div key={key} className="space-y-2">
-              <Label htmlFor={key}>{label}</Label>
-              <Textarea
-                id={key}
-                value={profile[key]}
-                onChange={(e) => handleChange(key, e.target.value)}
-                placeholder={placeholder}
-                rows={key === 'allergies' ? 2 : 3}
-              />
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <Card className="p-8 bg-white shadow-md border border-gray-200 rounded-xl">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-[#1e3a8a] flex items-center justify-center">
             <Calendar className="w-5 h-5 text-white" />
           </div>
           <h3 className="text-2xl font-bold text-gray-900">Emergency & Healthcare Contacts</h3>
@@ -243,39 +238,33 @@ export function HealthProfile({ symptoms = [] }) {
         </div>
       </Card>
 
-      <Card className="p-8 bg-[#1e3a8a] text-white shadow-lg rounded-xl">
-        <div className="flex items-start gap-5">
-          <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-            <Building2 className="w-6 h-6 text-white" />
+      <Card className="p-8 bg-white shadow-md border border-gray-200 rounded-xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-lg bg-[#1e3a8a] flex items-center justify-center">
+            <Building2 className="w-5 h-5 text-white" />
           </div>
-          <div>
-            <h3 className="text-2xl font-bold mb-3">Medical System Integration</h3>
-            <p className="text-blue-100 mb-5 leading-relaxed">
-              Share your symptom tracking data with healthcare providers through secure export formats. 
-              Your exported files can be imported into most Electronic Health Record (EHR) systems or 
-              shared directly with your doctor.
-            </p>
-            <div className="space-y-2.5">
-              <p className="text-blue-50 flex items-center gap-2.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
-                HIPAA-compliant data export
-              </p>
-              <p className="text-blue-50 flex items-center gap-2.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
-                Compatible with major EHR systems
-              </p>
-              <p className="text-blue-50 flex items-center gap-2.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
-                Secure local storage (no cloud uploads)
-              </p>
-              <p className="text-blue-50 flex items-center gap-2.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
-                Easy sharing via email or patient portal
-              </p>
+          <h3 className="text-2xl font-bold text-gray-900">Medical Information</h3>
+        </div>
+        <div className="space-y-5">
+          {[
+            ['allergies', 'Allergies', 'List any allergies'],
+            ['currentMedications', 'Current Medications', 'List medications with dosage'],
+            ['chronicConditions', 'Chronic Conditions', 'List chronic conditions'],
+          ].map(([key, label, placeholder]) => (
+            <div key={key} className="space-y-2">
+              <Label htmlFor={key}>{label}</Label>
+              <Textarea
+                id={key}
+                value={profile[key]}
+                onChange={(e) => handleChange(key, e.target.value)}
+                placeholder={placeholder}
+                rows={key === 'allergies' ? 2 : 3}
+              />
             </div>
-          </div>
+          ))}
         </div>
       </Card>
+
 
       <div className="flex justify-end items-center gap-4">
         {saveMessage && <span className="text-green-600 text-sm">{saveMessage}</span>}

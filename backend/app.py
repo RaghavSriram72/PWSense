@@ -15,7 +15,6 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-# Load .env from backend/ then project root (so root .env works)
 _here = Path(__file__).resolve().parent
 load_dotenv(_here / ".env")
 load_dotenv(_here.parent / ".env")
@@ -26,7 +25,6 @@ CORS(app)
 # Wispr Flow: https://api-docs.wisprflow.ai/rest_api_transcribe
 WISPR_TRANSCRIBE_URL = "https://platform-api.wisprflow.ai/api/v1/dash/api"
 
-# Caretaker symptom log: allowed types and storage
 SYMPTOM_TYPES = frozenset({
     "fatigue", "pain", "headache", "nausea", "dizziness",
     "inflammation", "anxiety", "other", "hungry",
@@ -41,7 +39,7 @@ HEARTRATE_FILE = _data_dir / "heartrate.json"
 EMOTIONS_FILE = _data_dir / "emotions.json"
 HUNGER_SCORES_FILE = _data_dir / "hunger_scores.json"
 
-# Satiety score: Claude system prompt (do not modify)
+# Claude system prompt
 SATIETY_SCORE_SYSTEM_PROMPT = """Given this transcript, score the following on 0-10:
 1. Food mention frequency and emotional intensity
 2. Topic return rate (how many times does the speaker circle back to food)
@@ -54,21 +52,17 @@ Return a JSON with scores, the specific phrases that drove each score, and the o
 
 
 def _get_wispr_api_key():
-    """API key for Wispr Flow (Bearer fl-...). Prefer WISPR_FLOW_API_KEY, fallback WHISPER_API_KEY."""
     key = (os.environ.get("WISPR_FLOW_API_KEY") or os.environ.get("WHISPER_API_KEY") or "").strip()
     return key if key else None
 
 
 def _get_anthropic_api_key():
-    """API key for Claude (ANTHROPIC_API_KEY in .env)."""
     key = (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
     return key if key else None
 
 
 def _extract_json_from_text(text: str):
-    """Extract a JSON object from model output (handles markdown code blocks)."""
     text = (text or "").strip()
-    # Try to find JSON object
     start = text.find("{")
     end = text.rfind("}") + 1
     if start >= 0 and end > start:
@@ -77,7 +71,6 @@ def _extract_json_from_text(text: str):
 
 
 def _load_symptoms():
-    """Read symptom log from JSON file."""
     if not SYMPTOMS_FILE.exists():
         return []
     with open(SYMPTOMS_FILE, "r", encoding="utf-8") as f:
@@ -85,13 +78,11 @@ def _load_symptoms():
 
 
 def _save_symptoms(entries):
-    """Write symptom log to JSON file."""
     with open(SYMPTOMS_FILE, "w", encoding="utf-8") as f:
         json.dump(entries, f, indent=2, ensure_ascii=False)
 
 
 def _load_heartrate():
-    """Read heart rate readings from JSON file."""
     if not HEARTRATE_FILE.exists():
         return []
     with open(HEARTRATE_FILE, "r", encoding="utf-8") as f:
@@ -99,13 +90,11 @@ def _load_heartrate():
 
 
 def _save_heartrate(entries):
-    """Write heart rate readings to JSON file."""
     with open(HEARTRATE_FILE, "w", encoding="utf-8") as f:
         json.dump(entries, f, indent=2, ensure_ascii=False)
 
 
 def _load_emotions():
-    """Read emotional state entries from JSON file."""
     if not EMOTIONS_FILE.exists():
         return []
     with open(EMOTIONS_FILE, "r", encoding="utf-8") as f:
@@ -113,13 +102,11 @@ def _load_emotions():
 
 
 def _save_emotions(entries):
-    """Write emotional state entries to JSON file."""
     with open(EMOTIONS_FILE, "w", encoding="utf-8") as f:
         json.dump(entries, f, indent=2, ensure_ascii=False)
 
 
 def _load_hunger_scores():
-    """Read hunger score entries from JSON file."""
     if not HUNGER_SCORES_FILE.exists():
         return []
     with open(HUNGER_SCORES_FILE, "r", encoding="utf-8") as f:
@@ -127,13 +114,11 @@ def _load_hunger_scores():
 
 
 def _save_hunger_scores(entries):
-    """Write hunger score entries to JSON file."""
     with open(HUNGER_SCORES_FILE, "w", encoding="utf-8") as f:
         json.dump(entries, f, indent=2, ensure_ascii=False)
 
 
 def _guess_audio_format(content_type: str, filename: str = "") -> str:
-    """Guess pydub format from content type or filename."""
     ct = (content_type or "").lower()
     fn = (filename or "").lower()
     if "webm" in ct or fn.endswith(".webm"):
@@ -148,10 +133,6 @@ def _guess_audio_format(content_type: str, filename: str = "") -> str:
 
 
 def _audio_to_wav_path(audio_bytes: bytes, content_type: str, filename: str = "") -> str:
-    """
-    Convert uploaded audio (webm, wav, mp3, mp4) to 16kHz mono WAV.
-    Returns path to a temp WAV file. Caller must delete the file when done.
-    """
     fmt = _guess_audio_format(content_type, filename)
     suffix = f".{fmt}" if fmt else ".bin"
     fd, input_path = tempfile.mkstemp(suffix=suffix)
@@ -196,7 +177,6 @@ def _audio_to_wav_path(audio_bytes: bytes, content_type: str, filename: str = ""
 
 
 def _audio_to_16k_wav_base64(audio_bytes: bytes, content_type: str, filename: str = "") -> str:
-    """Convert uploaded audio (webm, wav, mp3, mp4) to 16kHz mono WAV and return base64."""
     try:
         from pydub import AudioSegment
     except ImportError:

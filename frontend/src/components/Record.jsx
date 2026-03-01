@@ -179,7 +179,7 @@ export function Record({ onRecordingComplete }) {
             <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
               <div className="flex items-center gap-2 mb-2">
                 <Smile className="w-5 h-5 text-[#1e3a8a]" />
-                <h3 className="font-semibold text-gray-900">Emotion</h3>
+                <h3 className="font-semibold text-gray-900">Detected Emotion: </h3>
               </div>
               <p className="text-lg font-medium text-[#1e3a8a] capitalize mb-2">
                 {results.emotion}

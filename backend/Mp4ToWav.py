@@ -3,10 +3,6 @@ from moviepy import VideoFileClip
 
 
 def convert_mp4_to_wav(input_path, output_path):
-    """
-    Convert an MP4 file to WAV by extracting the audio track.
-    Raises ValueError if the file has no audio track.
-    """
     clip = VideoFileClip(input_path)
     if clip.audio is None:
         clip.close()

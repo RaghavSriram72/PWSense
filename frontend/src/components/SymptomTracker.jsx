@@ -8,7 +8,6 @@ import { Checkbox } from './ui/Checkbox'
 import { Activity, Plus } from 'lucide-react'
 import { createSymptom } from '../api'
 
-// Backend symptom types (must match Flask SYMPTOM_TYPES)
 const SYMPTOM_TYPES = [
   'Skin picking',
   'High Anxiety',

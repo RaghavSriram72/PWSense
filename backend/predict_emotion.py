@@ -3,7 +3,7 @@ import numpy as np
 import librosa
 import tensorflow as tf
 
-# Model outputs 10 classes (indices 0-9). Map to RAVDESS-style emotions.
+# Model outputs 10 classes (indices 0-9).
 EMOTIONS = {
     0: "neutral",
     1: "calm",
@@ -21,11 +21,10 @@ MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models", 
 
 
 def extract_mfcc(wav_path):
-    # Backend converts to 16kHz; trim to ~3.5s to match RAVDESS clip length
     X, sample_rate = librosa.load(wav_path, sr=16000, mono=True)
-    max_len = int(3.5 * sample_rate)  # ~3.5 seconds
+    max_len = int(3.5 * sample_rate)
     if len(X) > max_len:
-        X = X[:max_len]  # take first 3.5s
+        X = X[:max_len]  
     elif len(X) < max_len:
         X = np.pad(X, (0, max_len - len(X)), mode="constant")
     mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=40).T, axis=0)

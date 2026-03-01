@@ -1,4 +1,4 @@
-# PWSense — Prader-Willi Syndrome Vagus Nerve Stimulation and Monitoring System
+# Prader-Willi Syndrome Vagus Nerve Stimulation and Monitoring System
 
 Medical dashboard for tracking symptoms, voice recordings, and health insights for Prader-Willi Syndrome (PWS) care. Records speech and generates transcript, hunger score, and conducts emotion analysis. Additionally, you can log symptoms and view analytics over time.
 

@@ -10,14 +10,14 @@ import { createSymptom } from '../api'
 
 // Backend symptom types (must match Flask SYMPTOM_TYPES)
 const SYMPTOM_TYPES = [
-  'fatigue',
-  'pain',
-  'headache',
-  'nausea',
-  'dizziness',
-  'inflammation',
-  'anxiety',
-  'other',
+  'Skin picking',
+  'High Anxiety',
+  'Depression',
+  'Irritable',
+  'Sleep Disturbance',
+  'Increased Opposition',
+  'Uncommunicative',
+  'Other',
 ]
 
 export function SymptomTracker({ onAddSymptom }) {

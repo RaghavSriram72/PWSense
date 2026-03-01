@@ -292,13 +292,14 @@ export function Dashboard({ symptoms = [], loading }) {
                   <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 12 }} />
                   <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#ffffff',
                       border: '1px solid #e5e7eb',
                       borderRadius: '8px',
                     }}
                   />
-                  <Bar dataKey="value" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="value" fill="#3b82f6" radius={[8, 8, 0, 0]} activeBar={{ fill: '#2563eb' }} />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
@@ -318,13 +319,14 @@ export function Dashboard({ symptoms = [], loading }) {
                     width={100}
                   />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#ffffff',
                       border: '1px solid #e5e7eb',
                       borderRadius: '8px',
                     }}
                   />
-                  <Bar dataKey="count" fill="#ef4444" radius={[0, 8, 8, 0]} />
+                  <Bar dataKey="count" fill="#3b82f6" radius={[0, 8, 8, 0]} activeBar={{ fill: '#2563eb' }} />
                 </BarChart>
               </ResponsiveContainer>
             </Card>

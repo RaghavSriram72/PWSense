@@ -140,13 +140,14 @@ export function SymptomHistory({ symptoms }) {
                     <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 12 }} />
                     <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
                     <Tooltip
+                      cursor={false}
                       contentStyle={{
                         backgroundColor: '#ffffff',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                       }}
                     />
-                    <Bar dataKey="count" fill="#dc2626" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="count" fill="#dc2626" radius={[8, 8, 0, 0]} activeBar={{ fill: '#b91c1c' }} />
                   </BarChart>
                 </ResponsiveContainer>
               </Card>

@@ -6,11 +6,11 @@ Medical dashboard for tracking symptoms, voice recordings, and health insights f
 
 PWSense helps caregivers and patients:
 
-- **Track** — Log symptoms (anxiety, depression, irritability, sleep disturbance, etc.) with severity, triggers, and outburst flags
-- **Record** — Records speech and generates transcript, hunger/satiety score (via Claude), and emotion detection (via RAVDEES CNN model)
-- **Insights** — View emotional state trends, hunger tracker, heart rate, symptom patterns over time
-- **History** — Review past entries, flare-ups by symptom type, and most common triggers
-- **Profile** — View and manage health profile, share reports with healthcare providers, and automatic MyChart integration
+- **Track**: Log symptoms (anxiety, depression, irritability, sleep disturbance, etc.) with severity, triggers, and outburst flags
+- **Record**: Records speech and generates transcript, hunger/satiety score (via Claude), and emotion detection (via RAVDEES CNN model)
+- **Insights**: View emotional state trends, hunger tracker, heart rate, symptom patterns over time
+- **History**: Review past entries, flare-ups by symptom type, and most common triggers
+- **Profile**: View and manage health profile, share reports with healthcare providers, and automatic MyChart integration
 
 ## How to Run
 

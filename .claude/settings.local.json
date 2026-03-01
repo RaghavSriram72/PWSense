@@ -4,7 +4,8 @@
       "Bash(python:*)",
       "Bash(ls:*)",
       "Bash(.venv/Scripts/pip show:*)",
-      "Bash(.venv/Scripts/pip:*)"
+      "Bash(.venv/Scripts/pip:*)",
+      "Bash(pip show:*)"
     ]
   }
 }

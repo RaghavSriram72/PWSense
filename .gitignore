@@ -30,3 +30,6 @@ build/
 
 # training data
 backend/train_data/
+
+# notebooks
+backend/EmotionsRecognition.ipynb

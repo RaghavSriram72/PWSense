@@ -21,7 +21,7 @@ import {
   Customized,
 } from 'recharts'
 import { Calendar, TrendingUp, AlertTriangle, Zap } from 'lucide-react'
-import { getHeartrate, getEmotions } from '../api'
+import { getHeartrate, getEmotions, getHungerScores } from '../api'
 
 const COLORS = ['#1e3a8a', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#1e40af', '#1d4ed8']
 
@@ -40,6 +40,7 @@ const EMOTION_COLORS = {
 export function Dashboard({ symptoms = [], loading }) {
   const [heartrate, setHeartrate] = useState([])
   const [emotions, setEmotions] = useState([])
+  const [hungerScores, setHungerScores] = useState([])
 
   useEffect(() => {
     let cancelled = false
@@ -53,20 +54,27 @@ export function Dashboard({ symptoms = [], loading }) {
         if (!cancelled) setEmotions(Array.isArray(data) ? data : [])
       })
       .catch(() => {})
+    getHungerScores(7)
+      .then((data) => {
+        if (!cancelled) setHungerScores(Array.isArray(data) ? data : [])
+      })
+      .catch(() => {})
     return () => { cancelled = true }
   }, [])
 
-  const severityOverTime = symptoms
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const weekSymptoms = symptoms.filter((s) => new Date(s.date).getTime() >= weekAgo)
+
+  const severityOverTime = weekSymptoms
     .map((s) => ({
       date: new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       severity: s.severity,
       type: s.symptomType,
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(-30)
 
   const symptomTypeCount = {}
-  symptoms.forEach((s) => {
+  weekSymptoms.forEach((s) => {
     symptomTypeCount[s.symptomType] = (symptomTypeCount[s.symptomType] || 0) + 1
   })
   const symptomDistribution = Object.entries(symptomTypeCount).map(([name, value]) => ({
@@ -75,17 +83,14 @@ export function Dashboard({ symptoms = [], loading }) {
   }))
 
   const avgSeverity =
-    symptoms.length > 0
-      ? (symptoms.reduce((sum, s) => sum + s.severity, 0) / symptoms.length).toFixed(1)
+    weekSymptoms.length > 0
+      ? (weekSymptoms.reduce((sum, s) => sum + s.severity, 0) / weekSymptoms.length).toFixed(1)
       : '0'
-  const highSeverityCount = symptoms.filter((s) => s.severity >= 7).length
-  const weeklyFrequency = symptoms.filter((s) => {
-    const diffDays = (Date.now() - new Date(s.date).getTime()) / (1000 * 60 * 60 * 24)
-    return diffDays <= 7
-  }).length
+  const highSeverityCount = weekSymptoms.filter((s) => s.severity >= 7).length
+  const weeklyFrequency = weekSymptoms.length
 
   const triggers = {}
-  symptoms.forEach((s) => {
+  weekSymptoms.forEach((s) => {
     if (s.triggers) {
       s.triggers
         .split(',')
@@ -105,7 +110,7 @@ export function Dashboard({ symptoms = [], loading }) {
     }))
 
   const radarData = Object.entries(symptomTypeCount).map(([type]) => {
-    const symptomsOfType = symptoms.filter((s) => s.symptomType === type)
+    const symptomsOfType = weekSymptoms.filter((s) => s.symptomType === type)
     const avgSev =
       symptomsOfType.length > 0
         ? symptomsOfType.reduce((sum, s) => sum + s.severity, 0) / symptomsOfType.length
@@ -117,8 +122,15 @@ export function Dashboard({ symptoms = [], loading }) {
     }
   })
 
+  const hungerChartData = hungerScores.map((e) => ({
+    label: new Date(e.timestamp).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    }),
+    score: e.hunger_score,
+  }))
+
   const timeOfDay = { Morning: 0, Afternoon: 0, Evening: 0, Night: 0 }
-  symptoms.forEach((s) => {
+  weekSymptoms.forEach((s) => {
     const hour = new Date(s.date).getHours()
     if (hour >= 5 && hour < 12) timeOfDay.Morning++
     else if (hour >= 12 && hour < 17) timeOfDay.Afternoon++
@@ -127,7 +139,6 @@ export function Dashboard({ symptoms = [], loading }) {
   })
   const timeOfDayData = Object.entries(timeOfDay).map(([name, value]) => ({ name, value }))
 
-  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
   const emotionChartData = emotions
     .filter((e) => new Date(e.timestamp).getTime() >= weekAgo)
     .map((e) => ({
@@ -300,7 +311,51 @@ export function Dashboard({ symptoms = [], loading }) {
         </ResponsiveContainer>
       </Card>
 
-      {symptoms.length === 0 ? (
+      <Card className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Hunger Tracker (Last 7 Days)</h3>
+        <p className="text-sm text-gray-500 mb-6">Each bar is one logged "Hungry" entry — height = hunger score (0–10)</p>
+        {hungerChartData.length === 0 ? (
+          <div className="flex items-center justify-center h-[280px] text-gray-400 text-sm">
+            No hunger entries logged this week
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={hungerChartData} barCategoryGap="20%">
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+              <XAxis dataKey="label" tick={{ fill: '#6b7280', fontSize: 11 }} interval={0} angle={-30} textAnchor="end" height={60} />
+              <YAxis domain={[0, 10]} ticks={[0, 2, 4, 6, 8, 10]} tick={{ fill: '#6b7280', fontSize: 12 }} label={{ value: 'Score', angle: -90, position: 'insideLeft', fill: '#9ca3af', fontSize: 12 }} />
+              <Tooltip
+                cursor={{ fill: 'rgba(245,158,11,0.08)' }}
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null
+                  const { label, score } = payload[0].payload
+                  return (
+                    <div className="bg-white border border-gray-200 rounded-lg p-3 shadow text-sm">
+                      <p className="text-gray-500 mb-1">{label}</p>
+                      <p className="font-semibold text-blue-600">Hunger score: {score} / 10</p>
+                    </div>
+                  )
+                }}
+              />
+              <Bar
+                dataKey="score"
+                radius={[6, 6, 0, 0]}
+                maxBarSize={48}
+              >
+                {hungerChartData.map((entry, i) => {
+                  const intensity = entry.score / 10
+                  const r = Math.round(96 - intensity * 66)
+                  const g = Math.round(165 - intensity * 60)
+                  const b = Math.round(250 - intensity * 55)
+                  return <Cell key={i} fill={`rgb(${r},${g},${b})`} />
+                })}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </Card>
+
+      {weekSymptoms.length === 0 ? (
         <Card className="p-16 bg-white border border-gray-200 rounded-xl shadow-sm">
           <div className="text-center">
             <TrendingUp className="w-16 h-16 mx-auto text-gray-300 mb-4" />

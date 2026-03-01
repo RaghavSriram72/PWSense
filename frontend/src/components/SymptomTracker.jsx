@@ -17,6 +17,7 @@ const SYMPTOM_TYPES = [
   'Sleep Disturbance',
   'Increased Opposition',
   'Uncommunicative',
+  'Hungry',
   'Other',
 ]
 

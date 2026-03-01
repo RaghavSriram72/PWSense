@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { Card } from './ui/Card'
 import { Button } from './ui/Button'
-import { transcribe, getScore, getEmotion } from '../api'
+import { transcribe, getScore, getEmotion, createHungerScore } from '../api'
 import { Mic, Square, FileText, UtensilsCrossed, Smile } from 'lucide-react'
 
 export function Record() {
@@ -73,6 +73,9 @@ export function Record() {
       if (transcript.trim()) {
         try {
           scoreRes = await getScore(transcript)
+          if (scoreRes?.hunger_score != null) {
+            createHungerScore(scoreRes.hunger_score).catch(() => {})
+          }
         } catch {
           scoreRes = null
         }
@@ -159,9 +162,9 @@ export function Record() {
                   <UtensilsCrossed className="w-5 h-5 text-amber-700" />
                   <h3 className="font-semibold text-gray-900">Hunger Score</h3>
                 </div>
-                <pre className="text-sm text-gray-700 overflow-x-auto whitespace-pre-wrap font-sans">
-                  {JSON.stringify(results.score, null, 2)}
-                </pre>
+                <p className="text-3xl font-bold text-amber-700">
+                  {results.score.hunger_score}<span className="text-lg font-medium text-amber-600"> / 10</span>
+                </p>
               </div>
             )}
 

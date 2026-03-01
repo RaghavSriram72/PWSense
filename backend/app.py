@@ -29,7 +29,7 @@ WISPR_TRANSCRIBE_URL = "https://platform-api.wisprflow.ai/api/v1/dash/api"
 # Caretaker symptom log: allowed types and storage
 SYMPTOM_TYPES = frozenset({
     "fatigue", "pain", "headache", "nausea", "dizziness",
-    "inflammation", "anxiety", "other",
+    "inflammation", "anxiety", "other", "hungry",
 })
 EMOTION_TYPES = frozenset({
     "neutral", "calm", "happy", "sad", "angry", "fearful", "disgust", "surprised",
@@ -39,6 +39,7 @@ _data_dir.mkdir(parents=True, exist_ok=True)
 SYMPTOMS_FILE = _data_dir / "symptoms.json"
 HEARTRATE_FILE = _data_dir / "heartrate.json"
 EMOTIONS_FILE = _data_dir / "emotions.json"
+HUNGER_SCORES_FILE = _data_dir / "hunger_scores.json"
 
 # Satiety score: Claude system prompt (do not modify)
 SATIETY_SCORE_SYSTEM_PROMPT = """Given this transcript, score the following on 0-10:
@@ -47,7 +48,9 @@ SATIETY_SCORE_SYSTEM_PROMPT = """Given this transcript, score the following on 0
 3. Anxiety/distress markers in language
 4. Sentence-level perseveration (repeating the same idea in different words)
 
-Return a JSON with scores and the specific phrases that drove each score. Return only valid JSON, no markdown code blocks and no explanation text."""
+Then calculate an overall_hunger_score out of 10 as a weighted average of the four scores above: food mention frequency (30%), topic return rate (30%), anxiety/distress markers (20%), sentence-level perseveration (20%). Round to one decimal place.
+
+Return a JSON with scores, the specific phrases that drove each score, and the overall_hunger_score. Return only valid JSON, no markdown code blocks and no explanation text"""
 
 
 def _get_wispr_api_key():
@@ -112,6 +115,20 @@ def _load_emotions():
 def _save_emotions(entries):
     """Write emotional state entries to JSON file."""
     with open(EMOTIONS_FILE, "w", encoding="utf-8") as f:
+        json.dump(entries, f, indent=2, ensure_ascii=False)
+
+
+def _load_hunger_scores():
+    """Read hunger score entries from JSON file."""
+    if not HUNGER_SCORES_FILE.exists():
+        return []
+    with open(HUNGER_SCORES_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _save_hunger_scores(entries):
+    """Write hunger score entries to JSON file."""
+    with open(HUNGER_SCORES_FILE, "w", encoding="utf-8") as f:
         json.dump(entries, f, indent=2, ensure_ascii=False)
 
 
@@ -322,13 +339,65 @@ def score():
     try:
         json_str = _extract_json_from_text(raw_text)
         result = json.loads(json_str)
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         return jsonify({
             "error": "Claude did not return valid JSON",
             "raw_response": raw_text[:500],
         }), 502
 
-    return jsonify(result)
+    hunger_score = result.get("overall_hunger_score")
+    if hunger_score is None:
+        return jsonify({"error": "Could not extract hunger score from response"}), 502
+
+    return jsonify({"hunger_score": float(hunger_score)})
+
+
+@app.route("/api/hunger-scores", methods=["GET"])
+def list_hunger_scores():
+    """Return hunger score entries for the last N days. Query: ?days=7 (default)."""
+    try:
+        days = request.args.get("days", "7")
+        try:
+            days = int(days)
+        except (TypeError, ValueError):
+            days = 7
+        days = max(1, min(30, days))
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff_iso = cutoff.isoformat()
+        entries = _load_hunger_scores()
+        entries = [e for e in entries if (e.get("timestamp") or "") >= cutoff_iso]
+        entries.sort(key=lambda e: e.get("timestamp", ""))
+        return jsonify(entries)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/hunger-scores", methods=["POST"])
+def create_hunger_score():
+    """
+    Save a hunger score entry. Body (JSON): { "hunger_score": float (0-10) }
+    Server always sets id and timestamp.
+    """
+    body = request.get_json(silent=True) or {}
+    try:
+        hunger_score = float(body.get("hunger_score", -1))
+    except (TypeError, ValueError):
+        return jsonify({"error": "hunger_score must be a number"}), 400
+    if not (0 <= hunger_score <= 10):
+        return jsonify({"error": "hunger_score must be 0-10"}), 400
+    timestamp = datetime.now(timezone.utc).isoformat()
+    entry = {
+        "id": str(uuid.uuid4()),
+        "hunger_score": round(hunger_score, 1),
+        "timestamp": timestamp,
+    }
+    try:
+        entries = _load_hunger_scores()
+        entries.append(entry)
+        _save_hunger_scores(entries)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify(entry), 201
 
 
 @app.route("/api/symptoms", methods=["GET"])

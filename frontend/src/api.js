@@ -61,6 +61,25 @@ export async function transcribe(audioBlob) {
   return res.json()
 }
 
+export async function getHungerScores(days = 7) {
+  const res = await fetch(`${API}/hunger-scores?days=${days}`)
+  if (!res.ok) throw new Error('Failed to load hunger scores')
+  return res.json()
+}
+
+export async function createHungerScore(hunger_score) {
+  const res = await fetch(`${API}/hunger-scores`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ hunger_score }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || res.statusText)
+  }
+  return res.json()
+}
+
 /** POST transcript for hunger/satiety score. Returns scores and phrases. */
 export async function getScore(transcript) {
   const res = await fetch(`${API}/score`, {

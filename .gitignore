@@ -27,3 +27,6 @@ env/
 dist/
 build/
 *.log
+
+# training data
+backend/train_data/

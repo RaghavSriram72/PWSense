@@ -5,6 +5,7 @@ import base64
 import io
 import json
 import os
+import tempfile
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -109,6 +110,50 @@ def _guess_audio_format(content_type: str, filename: str = "") -> str:
     if "wav" in ct or fn.endswith(".wav"):
         return "wav"
     return "mp3"  # default try mp3 then others
+
+
+def _audio_to_wav_path(audio_bytes: bytes, content_type: str, filename: str = "") -> str:
+    """
+    Convert uploaded audio (webm, wav, mp3, mp4) to 16kHz mono WAV.
+    Returns path to a temp WAV file. Caller must delete the file when done.
+    """
+    fmt = _guess_audio_format(content_type, filename)
+    suffix = f".{fmt}" if fmt else ".bin"
+    fd, input_path = tempfile.mkstemp(suffix=suffix)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(audio_bytes)
+        wav_fd, wav_path = tempfile.mkstemp(suffix=".wav")
+        os.close(wav_fd)
+        try:
+            if fmt == "mp4":
+                from Mp4ToWav import convert_mp4_to_wav
+                convert_mp4_to_wav(input_path, wav_path)
+            else:
+                from pydub import AudioSegment
+                fallback_formats = ["mp3", "webm", "wav", "mp4"]
+                if fmt not in fallback_formats:
+                    fallback_formats.insert(0, fmt)
+                else:
+                    fallback_formats = [fmt] + [f for f in fallback_formats if f != fmt]
+                seg = None
+                for f in fallback_formats:
+                    try:
+                        seg = AudioSegment.from_file(input_path, format=f)
+                        break
+                    except Exception:
+                        continue
+                if seg is None:
+                    raise ValueError("Could not decode audio. Check file format.")
+                seg = seg.set_frame_rate(16000).set_channels(1)
+                seg.export(wav_path, format="wav")
+            return wav_path
+        except Exception:
+            if os.path.exists(wav_path):
+                os.unlink(wav_path)
+            raise
+    finally:
+        os.unlink(input_path)
 
 
 def _audio_to_16k_wav_base64(audio_bytes: bytes, content_type: str, filename: str = "") -> str:
@@ -370,6 +415,72 @@ def create_heartrate():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     return jsonify(entry), 201
+
+_emotion_model = None
+
+
+def _load_emotion_model():
+    global _emotion_model
+    if _emotion_model is None:
+        import tensorflow as tf
+        model_path = _here / "models" / "Emotion_Voice_Detection_Model.h5"
+        if not model_path.exists():
+            raise FileNotFoundError(
+                f"Emotion model not found at {model_path}. "
+                "Download or place Emotion_Voice_Detection_Model.h5 in backend/models/"
+            )
+        _emotion_model = tf.keras.models.load_model(model_path)
+    return _emotion_model
+
+
+@app.route("/api/emotion", methods=["POST"])
+def get_emotion():
+    """
+    Get the emotion of an audio file from voice.
+    Accept multipart form data with field 'audio' or 'file'.
+    Supports: wav, mp3, mp4, webm.
+    Returns: { "emotion": str, "probabilities": { emotion: float, ... } }
+    """
+    if "audio" not in request.files and "file" not in request.files:
+        return jsonify({"error": "No audio file: send multipart field 'audio' or 'file'"}), 400
+    blob = request.files.get("audio") or request.files.get("file")
+    if not blob or blob.filename == "":
+        return jsonify({"error": "No audio file"}), 400
+
+    content_type = blob.content_type or ""
+    try:
+        audio_bytes = blob.read()
+    except Exception as e:
+        return jsonify({"error": f"Failed to read upload: {e}"}), 400
+
+    if not audio_bytes:
+        return jsonify({"error": "Uploaded file is empty"}), 400
+
+    wav_path = None
+    try:
+        wav_path = _audio_to_wav_path(audio_bytes, content_type, blob.filename or "")
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Audio conversion failed: {e}"}), 400
+
+    try:
+        from predict_emotion import predict_emotion, EMOTIONS
+
+        model = _load_emotion_model()
+        emotion, probs = predict_emotion(wav_path, model)
+        probs_dict = {EMOTIONS.get(i, f"class_{i}"): float(p) for i, p in enumerate(probs)}
+        return jsonify({"emotion": emotion, "probabilities": probs_dict})
+    except FileNotFoundError as e:
+        return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": f"Emotion prediction failed: {e}"}), 500
+    finally:
+        if wav_path and os.path.exists(wav_path):
+            try:
+                os.unlink(wav_path)
+            except OSError:
+                pass
 
 
 if __name__ == "__main__":

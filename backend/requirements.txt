@@ -4,3 +4,7 @@ python-dotenv
 requests
 pydub
 anthropic
+# For /api/emotion (predict_emotion.py)
+numpy
+librosa
+tensorflow

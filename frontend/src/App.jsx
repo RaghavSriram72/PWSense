@@ -4,8 +4,9 @@ import { SymptomTracker } from './components/SymptomTracker'
 import { SymptomHistory } from './components/SymptomHistory'
 import { Dashboard } from './components/Dashboard'
 import { HealthProfile } from './components/HealthProfile'
+import { Record } from './components/Record'
 import { ElectronicBackground } from './components/ElectronicBackground'
-import { BarChart3, Clock, Plus, User } from 'lucide-react'
+import { BarChart3, Clock, Plus, User, Mic } from 'lucide-react'
 import { getSymptoms } from './api'
 import { backendToSymptom } from './lib/utils'
 import logo from './logo.png'
@@ -57,10 +58,14 @@ export default function App() {
         <Tabs defaultValue="track" className="w-full">
           <div className="bg-white py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-4 gap-3 bg-transparent h-auto p-0 mb-6">
+              <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-5 gap-3 bg-transparent h-auto p-0 mb-6">
                 <TabsTrigger value="track">
                   <Plus className="w-5 h-5" aria-hidden />
                   <span className="text-sm font-medium">Track</span>
+                </TabsTrigger>
+                <TabsTrigger value="record">
+                  <Mic className="w-5 h-5" aria-hidden />
+                  <span className="text-sm font-medium">Record</span>
                 </TabsTrigger>
                 <TabsTrigger value="dashboard">
                   <BarChart3 className="w-5 h-5" aria-hidden />
@@ -82,6 +87,14 @@ export default function App() {
             <div className="bg-[#d5dce6] py-12">
               <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <SymptomTracker onAddSymptom={handleAddSymptom} />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="record" className="mt-0">
+            <div className="bg-[#d5dce6] py-12">
+              <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                <Record />
               </div>
             </div>
           </TabsContent>

@@ -283,7 +283,7 @@ def create_symptom():
     - severity: 0-10
     - possible_triggers: string (optional)
     - additional_notes: string (optional)
-    - is_outbreak: boolean (optional, default false)
+    - is_outburst: boolean (optional, default false)
     Server always sets id and timestamp (UTC); do not send timestamp from client.
     """
     body = request.get_json(silent=True) or {}
@@ -301,7 +301,7 @@ def create_symptom():
         return jsonify({"error": "severity must be 0-10"}), 400
     possible_triggers = (body.get("possible_triggers") or "").strip()
     additional_notes = (body.get("additional_notes") or "").strip()
-    is_outbreak = bool(body.get("is_outbreak", False))
+    is_outburst = bool(body.get("is_outburst", False))
     # Timestamp is always server-generated (never from client input)
     timestamp = datetime.now(timezone.utc).isoformat()
     entry = {
@@ -310,7 +310,7 @@ def create_symptom():
         "severity": severity,
         "possible_triggers": possible_triggers,
         "additional_notes": additional_notes,
-        "is_outbreak": is_outbreak,
+        "is_outburst": is_outburst,
         "timestamp": timestamp,
     }
     try:

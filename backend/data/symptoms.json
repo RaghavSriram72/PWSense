@@ -1,0 +1,47 @@
+[
+  {
+    "id": "ac2d4de1-8bbc-4baf-9eab-5c70f2e5ec59",
+    "symptom_type": "headache",
+    "severity": 7,
+    "possible_triggers": "Stress",
+    "additional_notes": "",
+    "is_outburst": true,
+    "timestamp": "2026-03-01T00:52:13.594308+00:00"
+  },
+  {
+    "id": "db79333d-047d-42bc-854a-3b337b20b5b2",
+    "symptom_type": "nausea",
+    "severity": 8,
+    "possible_triggers": "",
+    "additional_notes": "",
+    "is_outburst": true,
+    "timestamp": "2026-03-01T00:53:26.215617+00:00"
+  },
+  {
+    "id": "1050fcf0-1d0f-46f6-a1e1-1e5b3a0e5b83",
+    "symptom_type": "anxiety",
+    "severity": 9,
+    "possible_triggers": "Food",
+    "additional_notes": "",
+    "is_outburst": true,
+    "timestamp": "2026-03-01T00:53:57.091763+00:00"
+  },
+  {
+    "id": "79b2f231-8824-452f-bd8d-766b61fc4dfb",
+    "symptom_type": "headache",
+    "severity": 1,
+    "possible_triggers": "lack of sleep",
+    "additional_notes": "",
+    "is_outbreak": false,
+    "timestamp": "2026-03-01T01:04:42.388553+00:00"
+  },
+  {
+    "id": "028dbce8-5075-4bed-b8bc-ba7733321bba",
+    "symptom_type": "nausea",
+    "severity": 9,
+    "possible_triggers": "Lack of sleep",
+    "additional_notes": "",
+    "is_outbreak": false,
+    "timestamp": "2026-03-01T01:09:53.959356+00:00"
+  }
+]
